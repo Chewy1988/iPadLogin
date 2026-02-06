@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>iPad Visitor Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#34c759">
+
+<!-- iOS PWA Support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="logo.png">
+
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f2f2f7; margin: 0; padding: 50px 20px; }
+  .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+  h1 { text-align: center; font-size: 32px; margin-bottom: 25px; }
+  input { width: 100%; font-size: 24px; padding: 18px; border-radius: 12px; border: 1px solid #ccc; margin-bottom: 20px; box-sizing: border-box; }
+  .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  button { flex: 1; font-size: 24px; padding: 20px; border: none; border-radius: 14px; cursor: pointer; min-width: 120px; }
+  .sign-in { background: #34c759; color: white; }
+  .sign-out { background: #ff3b30; color: white; }
+  h2 { margin-top: 30px; font-size: 24px; }
+  ul { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+  li { background: #f2f2f7; margin: 8px 0; padding: 12px 16px; border-radius: 10px; font-size: 20px; cursor: pointer; }
+  li:active { background: #d1d1d6; }
+  .footer { margin-top: 30px; text-align: center; }
+  .export { font-size: 20px; padding: 14px 20px; border-radius: 12px; background: grey; color: white; border: none; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* Modals */
+  #confirmModal, #passcodeModal { display:none; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); }
+  .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
+  .modal h3 { font-size: 24px; margin-bottom: 10px; }
+  .modal-buttons { display: flex; gap: 10px; }
+  .modal-buttons button { flex: 1; font-size: 22px; padding: 14px; border-radius: 12px; border: none; cursor: pointer; }
+  .modal-buttons .yes { background: #34c759; color: white; }
+  .modal-buttons .no { background: #ff3b30; color: white; }
+</style>
+</head>
+<body>
+
+<!-- Modals -->
+<div id="confirmModal">
+  <div class="modal-backdrop"></div>
+  <div class="modal">
+    <h3>Induction Confirmation</h3>
+    <p>Have you been inducted?</p>
+    <div class="modal-buttons">
+      <button class="yes" onclick="confirmInduction(true)">Yes</button>
+      <button class="no" onclick="confirmInduction(false)">No</button>
+    </div>
+  </div>
+</div>
+
+<div id="passcodeModal">
+  <div class="modal-backdrop"></div>
+  <div class="modal">
+    <h3>Enter Passcode</h3>
+    <input type="password" id="passcodeInput" placeholder="Enter passcode" />
+    <div class="modal-buttons">
+      <button class="yes" onclick="checkPasscode()">Submit</button>
+      <button class="no" onclick="closePasscodeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div style="text-align:center; margin-bottom:20px;">
+    <img src="logo.png" alt="Company Logo" style="max-width:200px; height:auto;">
+  </div>
+
+  <h1>Project Argo CDM Area - Sign In/Out</h1>
+  <input id="nameInput" placeholder="Enter your name" />
+
+  <div class="buttons">
+    <button class="sign-in" onclick="signIn()">Sign In</button>
+    <button class="sign-out" onclick="signOut()">Sign Out</button>
+  </div>
+
+  <h2>Currently Signed In</h2>
+  <ul id="activeList"></ul>
+
+  <div class="footer">
+    <button class="export" onclick="exportCSV()">Export to CSV</button>
+    <button class="export" onclick="clearData()">Clear Old Data</button>
+  </div>
+</div>
+
+<script>
+let visits = JSON.parse(localStorage.getItem("visits")) || [];
+const nameInput = document.getElementById("nameInput");
+const activeList = document.getElementById("activeList");
+let pendingSignInName = null;
+
+render();
+
+// --- Sign In / Out ---
+function signIn() {
+  const name = nameInput.value.trim();
+  if (!name) return alert("Please enter your name");
+  if (visits.find(v => v.name === name && !v.signOut)) return alert("You are already signed in");
+  pendingSignInName = name;
+  document.getElementById("confirmModal").style.display = "block";
+}
+
+function confirmInduction(confirmed) {
+  document.getElementById("confirmModal").style.display = "none";
+  if (!confirmed) { pendingSignInName = null; return; }
+  visits.push({ name: pendingSignInName, signIn: new Date().toISOString(), signOut: null });
+  pendingSignInName = null;
+  save();
+}
+
+function signOut() {
+  const name = nameInput.value.trim();
+  const visit = visits.find(v => v.name === name && !v.signOut);
+  if (!visit) return alert("You are not currently signed in");
+  visit.signOut = new Date().toISOString();
+  save();
+}
+
+function save() {
+  localStorage.setItem("visits", JSON.stringify(visits));
+  nameInput.value = "";
+  render();
+}
+
+function render() {
+  activeList.innerHTML = "";
+  visits.filter(v => !v.signOut).forEach(v => {
+    const li = document.createElement("li");
+    li.textContent = v.name;
+    li.addEventListener("click", () => { nameInput.value = v.name; });
+    activeList.appendChild(li);
+  });
+}
+
+function exportCSV() {
+  let csv = "Name,Sign In,Sign Out\n";
+  visits.forEach(v => { csv += `${v.name},${v.signIn},${v.signOut || ""}\n`; });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "visitors.csv";
+  link.click();
+}
+
+function clearData() {
+  document.getElementById("passcodeModal").style.display = "block";
+  document.getElementById("passcodeInput").value = "";
+  document.getElementById("passcodeInput").focus();
+}
+
+function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
+
+function checkPasscode() {
+  const enteredPasscode = document.getElementById("passcodeInput").value;
+  if (enteredPasscode === "1234") {
+    localStorage.removeItem("visits");
+    visits = [];
+    render();
+    alert("All visitor data has been cleared.");
+    closePasscodeModal();
+  } else {
+    alert("Incorrect passcode. Data was not cleared.");
+    document.getElementById("passcodeInput").value = "";
+    document.getElementById("passcodeInput").focus();
+  }
+}
+
+// --- Wake Lock ---
+let wakeLock = null;
+async function requestWakeLock() {
+  try { wakeLock = await navigator.wakeLock.request('screen'); }
+  catch(err){ console.error(err); }
+}
+document.addEventListener('visibilitychange', () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') requestWakeLock();
+});
+requestWakeLock();
+
+// --- Fullscreen ---
+async function requestFullscreen() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) await elem.requestFullscreen();
+  else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
+}
+window.addEventListener('load', () => {
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    requestFullscreen().catch(() => {});
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) requestFullscreen().catch(() => {});
+});
+
+// --- Service Worker Registration ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => console.log('Service Worker registered with scope:', registration.scope))
+      .catch(error => console.log('Service Worker registration failed:', error));
+  });
+}
+</script>
+
+</body>
+</html>
