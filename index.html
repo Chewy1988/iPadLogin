@@ -113,6 +113,16 @@ let pendingAction = null; // "export" or "clear"
 autoClearOldData();
 render();
 
+  function formatDate(dateString) {
+  const d = new Date(dateString);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
 
 // --- Sign In / Out ---
 function signIn() {
@@ -157,7 +167,8 @@ function render() {
 function exportCSV() {
   let csv = "Name,Sign In,Sign Out\n";
   visits.forEach(v => {
-    csv += `${v.name},${v.signIn},${v.signOut || ""}\n`;
+    csv += `${v.name},${formatDate(v.signIn)},${v.signOut ? formatDate(v.signOut) : ""}\n`;
+
   });
 
   // 📅 Build timestamped filename
