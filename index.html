@@ -114,7 +114,6 @@ window.addEventListener("load", () => {
 });
 
   
-autoClearOldData();
 render();
 
   function formatDate(dateString) {
@@ -208,24 +207,13 @@ function requestExport() {
   document.getElementById("passcodeInput").focus();
 }
 
-function autoClearOldData() {
-  const now = Date.now();
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-
-  visits = visits.filter(v => {
-    const signInTime = new Date(v.signIn).getTime();
-    return (now - signInTime) < ONE_DAY;
-  });
-
-  localStorage.setItem("visits", JSON.stringify(visits));
-}
 
 
 function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
 function checkPasscode() {
   const enteredPasscode = document.getElementById("passcodeInput").value;
 
-  if (enteredPasscode !== "1234") {
+  if (enteredPasscode !== "8877") {
     alert("Incorrect passcode.");
     document.getElementById("passcodeInput").value = "";
     document.getElementById("passcodeInput").focus();
