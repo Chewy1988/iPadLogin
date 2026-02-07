@@ -184,7 +184,7 @@ function exportCSV() {
     String(now.getMinutes()).padStart(2, "0") + "-" +
     String(now.getSeconds()).padStart(2, "0");
 
-  const filename = `visitors_${timestamp}.csv`;
+  const filename = `CDM Visitors Log_${timestamp}.csv`;
 
   const blob = new Blob([csv], { type: "text/csv" });
   const link = document.createElement("a");
