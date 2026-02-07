@@ -85,7 +85,7 @@
   <ul id="activeList"></ul>
 
   <div class="footer">
-    <button class="export" onclick="exportCSV()">Export to CSV</button>
+    <button class="export" onclick="requestExport()">Export to CSV</button>
     <button class="export" onclick="clearData()">Clear Old Data</button>
   </div>
 </div>
@@ -95,6 +95,8 @@ let visits = JSON.parse(localStorage.getItem("visits")) || [];
 const nameInput = document.getElementById("nameInput");
 const activeList = document.getElementById("activeList");
 let pendingSignInName = null;
+let pendingAction = null; // "export" or "clear"
+
 
 render();
 
@@ -148,29 +150,48 @@ function exportCSV() {
   link.download = "visitors.csv";
   link.click();
 }
-
-function clearData() {
+function requestExport() {
+  pendingAction = "export";
   document.getElementById("passcodeModal").style.display = "block";
   document.getElementById("passcodeInput").value = "";
   document.getElementById("passcodeInput").focus();
 }
 
-function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
+function clearData() {
+  pendingAction = "clear";
+  document.getElementById("passcodeModal").style.display = "block";
+  document.getElementById("passcodeInput").value = "";
+  document.getElementById("passcodeInput").focus();
+}
 
+
+function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
 function checkPasscode() {
   const enteredPasscode = document.getElementById("passcodeInput").value;
-  if (enteredPasscode === "1234") {
+
+  if (enteredPasscode !== "1234") {
+    alert("Incorrect passcode.");
+    document.getElementById("passcodeInput").value = "";
+    document.getElementById("passcodeInput").focus();
+    return;
+  }
+
+  closePasscodeModal();
+
+  if (pendingAction === "export") {
+    exportCSV();
+  }
+
+  if (pendingAction === "clear") {
     localStorage.removeItem("visits");
     visits = [];
     render();
     alert("All visitor data has been cleared.");
-    closePasscodeModal();
-  } else {
-    alert("Incorrect passcode. Data was not cleared.");
-    document.getElementById("passcodeInput").value = "";
-    document.getElementById("passcodeInput").focus();
   }
+
+  pendingAction = null;
 }
+
 
 // --- Wake Lock ---
 let wakeLock = null;
