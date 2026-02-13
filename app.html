@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>iPad Visitor Log</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#34c759" />
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="logo.png" />
+
+  <style>
+    :root{
+      --muted: #6b7280;
+      --radius: 20px;
+
+      --sat: env(safe-area-inset-top);
+      --sar: env(safe-area-inset-right);
+      --sab: env(safe-area-inset-bottom);
+      --sal: env(safe-area-inset-left);
+
+      --font-base: 18px;
+      --font-lg: 20px;
+      --font-xl: 30px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #ffffff;
+      margin: 0;
+      padding: calc(16px + var(--sat)) calc(16px + var(--sar)) calc(16px + var(--sab)) calc(16px + var(--sal));
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    .container {
+      height: calc(100dvh - (16px + var(--sat)) - (16px + var(--sab)));
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: var(--radius);
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      padding: 18px;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    /* ===== Header ===== */
+    .app-header {
+      display: grid;
+      grid-template-columns: 240px 1fr 240px; /* centered title */
+      gap: 10px;
+      align-items: center;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+
+    .logo-wrap {
+      background: transparent;
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .logo-wrap img {
+      max-width: 200px;
+      width: 100%;
+      height: auto;
+    }
+
+    .title-wrap {
+      text-align: center;
+      justify-self: center;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: var(--font-xl);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #111827;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      font-size: var(--font-base);
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    /* ===== Form ===== */
+    .form {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.25fr; /* company larger */
+      gap: 12px;
+    }
+
+    input {
+      width: 100%;
+      font-size: var(--font-lg);
+      padding: 14px 14px;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #34c759;
+      box-shadow: 0 0 0 3px rgba(52,199,89,0.20);
+    }
+
+    /* ===== Buttons ===== */
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      font-size: var(--font-lg);
+      padding: 16px 18px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .sign-in { background: #34c759; color: #fff; }
+    .sign-out { background: #ff3b30; color: #fff; }
+
+    /* Admin special button */
+    .btn-blue { background: #60a5fa; color: #ffffff; }
+    .btn-blue:active { background: #3b82f6; }
+
+    /* ===== Lists ===== */
+    .panes {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .pane {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .pane h2 {
+      margin: 4px 0 10px;
+      font-size: 20px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .count {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      min-height: 0;
+      border-radius: 12px;
+    }
+
+    li {
+      background: #f9fafb;
+      margin: 8px 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: var(--font-base);
+      cursor: pointer;
+      border: 1px solid #eef0f4;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    /* ===== Highlight selected visitor ===== */
+    li.selected {
+      border-color: #34c759;
+      background: rgba(52,199,89,0.14);
+      box-shadow: 0 0 0 3px rgba(52,199,89,0.18);
+    }
+
+    .li-text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .li-name {
+      font-weight: 750;
+      color: #111827;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .li-company {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .delete-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      font-size: 20px;
+      line-height: 1;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .delete-btn:active {
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    /* ===== Modals ===== */
+    [hidden] { display: none !important; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 22px;
+      border-radius: 16px;
+      max-width: 420px;
+      width: min(92vw, 420px);
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+
+    .modal h3 { font-size: 22px; margin: 0 0 10px; }
+    .modal p { margin: 0 0 14px; color: #111827; }
+
+    .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-buttons.one { grid-template-columns: 1fr; }
+
+    .modal-buttons button { font-size: 18px; padding: 12px; border-radius: 12px; }
+    .yes { background: #34c759; color: white; }
+    .no { background: #ff3b30; color: white; }
+
+    /* ===== Bigger Induction Modal Only ===== */
+    #confirmModal .modal {
+      max-width: 520px;
+      width: min(95vw, 520px);
+      padding: 34px 28px;
+    }
+    #confirmModal .modal h3 { font-size: 28px; }
+    #confirmModal .modal p { font-size: 22px; margin-bottom: 22px; }
+    #confirmModal .modal-buttons button { font-size: 22px; padding: 18px 16px; border-radius: 14px; }
+
+    @media (max-width: 900px) {
+      .app-header { grid-template-columns: 1fr; text-align: center; gap: 12px; }
+      .logo-wrap { justify-content: center; }
+      .form { grid-template-columns: 1fr; }
+      .buttons { grid-template-columns: 1fr; }
+      .panes { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Modals -->
+  <div id="confirmModal" hidden aria-modal="true" role="dialog" aria-labelledby="confirmTitle">
+    <div class="modal-backdrop" data-close="confirm"></div>
+    <div class="modal">
+      <h3 id="confirmTitle"></h3>
+      <p id="confirmQuestion"></p>
+      <div class="modal-buttons">
+        <button class="yes" id="confirmYes"></button>
+        <button class="no" id="confirmNo"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="passcodeModal" hidden aria-modal="true" role="dialog" aria-labelledby="passcodeTitle">
+    <div class="modal-backdrop" data-close="passcode"></div>
+    <div class="modal">
+      <h3 id="passcodeTitle"></h3>
+      <input
+        type="password"
+        id="passcodeInput"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="4"
+        autocomplete="one-time-code"
+      />
+      <div class="modal-buttons">
+        <button class="yes" id="passcodeSubmit"></button>
+        <button class="no" id="passcodeCancel"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="exportConfirmModal" hidden aria-modal="true" role="dialog" aria-labelledby="exportTitle">
+    <div class="modal-backdrop" data-close="export"></div>
+    <div class="modal">
+      <h3 id="exportTitle"></h3>
+      <p id="exportMsg"></p>
+      <div class="modal-buttons one">
+        <button class="yes" id="exportOk"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteConfirmModal" hidden aria-modal="true" role="dialog" aria-labelledby="deleteTitle">
+    <div class="modal-backdrop" data-close="delete"></div>
+    <div class="modal">
+      <h3 id="deleteTitle"></h3>
+      <p id="deleteText"></p>
+      <div class="modal-buttons">
+        <button class="yes" id="deleteYes"></button>
+        <button class="no" id="deleteNo"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Modal -->
+  <div id="adminModal" hidden aria-modal="true" role="dialog" aria-labelledby="adminTitle">
+    <div class="modal-backdrop" data-close="admin"></div>
+    <div class="modal">
+      <h3 id="adminTitle"></h3>
+      <p id="adminHint"></p>
+      <div class="modal-buttons one" style="gap:10px;">
+        <button class="yes btn-blue" id="adminDlAll"></button>
+        <button class="yes" id="adminDlToday"></button>
+        <button class="yes" id="adminDlYesterday"></button>
+        <button class="no" id="adminClear"></button>
+        <button class="no" id="adminClose"></button>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <header class="app-header">
+      <div class="logo-wrap">
+        <img src="logo.png" alt="Company Logo" />
+      </div>
+
+      <div class="title-wrap">
+        <h1 id="hdrTitle"></h1>
+        <div class="subtitle" id="hdrSub"></div>
+      </div>
+
+      <div></div>
+    </header>
+
+    <section class="form" aria-label="Sign in form">
+      <input id="firstNameInput" autocomplete="given-name" />
+      <input id="lastNameInput" autocomplete="family-name" />
+      <input id="companyInput" autocomplete="organization" />
+    </section>
+
+    <section class="buttons">
+      <button class="sign-in" id="signInBtn"></button>
+      <button class="sign-out" id="signOutBtn"></button>
+    </section>
+
+    <section class="panes">
+      <div class="pane">
+        <h2>
+          <span id="activeHeader"></span>
+          <span class="count" id="activeCount">0</span>
+        </h2>
+        <ul id="activeList"></ul>
+      </div>
+
+      <div class="pane">
+        <h2>
+          <span id="historyHeader"></span>
+          <span class="count" id="historyCount">0</span>
+        </h2>
+        <ul id="historyList"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ---- Service Worker Register ----
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js");
+      });
+    }
+
+    // ---- English-only strings ----
+    const STR = {
+      hdrTitle: "Project Argo",
+      hdrSub: "CDM Area – Visitor Sign In / Out",
+
+      firstPh: "First name",
+      lastPh: "Last name",
+      companyPh: "Company",
+
+      signIn: "Sign In",
+      signOut: "Sign Out",
+      activeHeader: "Currently Signed In",
+      historyHeader: "Previous Visitors",
+
+      confirmTitle: "Induction Confirmation",
+      confirmQuestion: "Have you been inducted?",
+      yes: "Yes",
+      no: "No",
+
+      passcodeTitle: "Enter Passcode",
+      passcodePh: "Enter passcode",
+      submit: "Submit",
+      cancel: "Cancel",
+
+      exportTitle: "CSV Export",
+      exportMsg: "Your CSV has been downloaded.",
+      ok: "OK",
+
+      deleteTitle: "Delete Name",
+      deletePrompt: (name, company) => `Delete "${name}" (${company}) from the previous list?`,
+      delete: "Delete",
+
+      alertMissing: "Please enter first name, last name, and company",
+      alertAlreadyIn: "You are already signed in",
+      alertNotIn: "You are not currently signed in",
+      alertBadCode: "Incorrect passcode",
+
+      // Admin
+      adminTitle: "Admin",
+      adminHint: "Archive tools",
+      adminDlAll: "Download full archive",
+      adminDlToday: "Download today's sign-ins",
+      adminDlYesterday: "Download yesterday's sign-ins",
+      adminClear: "Clear archive",
+      adminClose: "Close",
+      adminNoArchive: "No archive available.",
+      adminNoRecords: "No records found for that day.",
+      adminCleared: "Archive cleared."
+    };
+
+    // ---- Data ----
+    let visits = JSON.parse(localStorage.getItem("visits")) || [];
+    let previousNames = JSON.parse(localStorage.getItem("previousNames")) || {};
+    let archive = JSON.parse(localStorage.getItem("archive")) || [];
+
+    // ---- Elements ----
+    const firstNameInput = document.getElementById("firstNameInput");
+    const lastNameInput = document.getElementById("lastNameInput");
+    const companyInput = document.getElementById("companyInput");
+
+    const activeList = document.getElementById("activeList");
+    const historyList = document.getElementById("historyList");
+    const activeCount = document.getElementById("activeCount");
+    const historyCount = document.getElementById("historyCount");
+
+    const confirmModal = document.getElementById("confirmModal");
+    const passcodeModal = document.getElementById("passcodeModal");
+    const exportConfirmModal = document.getElementById("exportConfirmModal");
+    const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+
+    const signInBtn = document.getElementById("signInBtn");
+    const signOutBtn = document.getElementById("signOutBtn");
+
+    const confirmTitleEl = document.getElementById("confirmTitle");
+    const confirmQuestionEl = document.getElementById("confirmQuestion");
+    const confirmYes = document.getElementById("confirmYes");
+    const confirmNo = document.getElementById("confirmNo");
+
+    const passcodeTitleEl = document.getElementById("passcodeTitle");
+    const passcodeInput = document.getElementById("passcodeInput");
+    const passcodeSubmit = document.getElementById("passcodeSubmit");
+    const passcodeCancel = document.getElementById("passcodeCancel");
+
+    const exportTitleEl = document.getElementById("exportTitle");
+    const exportMsgEl = document.getElementById("exportMsg");
+    const exportOk = document.getElementById("exportOk");
+
+    const deleteTitleEl = document.getElementById("deleteTitle");
+    const deleteText = document.getElementById("deleteText");
+    const deleteYes = document.getElementById("deleteYes");
+    const deleteNo = document.getElementById("deleteNo");
+
+    const hdrTitleEl = document.getElementById("hdrTitle");
+    const hdrSubEl = document.getElementById("hdrSub");
+    const activeHeaderEl = document.getElementById("activeHeader");
+    const historyHeaderEl = document.getElementById("historyHeader");
+
+    // Admin elements
+    const adminModal = document.getElementById("adminModal");
+    const adminTitleEl = document.getElementById("adminTitle");
+    const adminHintEl = document.getElementById("adminHint");
+    const adminDlAll = document.getElementById("adminDlAll");
+    const adminDlToday = document.getElementById("adminDlToday");
+    const adminDlYesterday = document.getElementById("adminDlYesterday");
+    const adminClear = document.getElementById("adminClear");
+    const adminClose = document.getElementById("adminClose");
+
+    // ---- State ----
+    let pendingSignIn = null;
+    let pendingAction = null;
+    let pendingDeleteName = null;
+
+    // ============================================================
+    //  AUTO-RETURN TO WELCOME PAGE AFTER 15 SECONDS OF INACTIVITY
+    //  (but NOT if any modal is open)
+    // ============================================================
+    let returnIdleTimer = null;
+
+    function isAnyModalOpen() {
+      const modals = [
+        confirmModal,
+        passcodeModal,
+        exportConfirmModal,
+        deleteConfirmModal,
+        adminModal
+      ];
+      return modals.some(m => m && !m.hidden);
+    }
+
+    function resetReturnIdleTimer() {
+      clearTimeout(returnIdleTimer);
+
+      returnIdleTimer = setTimeout(() => {
+        if (isAnyModalOpen()) {
+          resetReturnIdleTimer();
+          return;
+        }
+        window.location.href = "index.html";
+      }, 15000);
+    }
+
+    ["pointerdown", "touchstart", "mousemove", "keydown", "scroll"].forEach((evt) => {
+      document.addEventListener(evt, resetReturnIdleTimer, { passive: true });
+    });
+
+    resetReturnIdleTimer();
+    // ============================================================
+
+    // ============================================================
+    //  Selected list item highlight state
+    // ============================================================
+    let selectedName = null;
+
+    function setSelected(name, listId) {
+      selectedName = name;
+
+      document.querySelectorAll("#activeList li, #historyList li").forEach(li => {
+        li.classList.remove("selected");
+      });
+
+      if (listId) {
+        const el = document.querySelector(`#${listId} li[data-name="${CSS.escape(name)}"]`);
+        if (el) el.classList.add("selected");
+      }
+    }
+
+    // ============================================================
+    //  AUTO-CLEAR ALL FIELDS AFTER 10 SECONDS OF INACTIVITY
+    // ============================================================
+    let idleTimer = null;
+
+    function clearFormFields() {
+      firstNameInput.value = "";
+      lastNameInput.value = "";
+      companyInput.value = "";
+
+      selectedName = null;
+      document.querySelectorAll("#activeList li, #historyList li").forEach(li => {
+        li.classList.remove("selected");
+      });
+    }
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        if (
+          firstNameInput.value.trim() ||
+          lastNameInput.value.trim() ||
+          companyInput.value.trim()
+        ) {
+          clearFormFields();
+        }
+      }, 10000);
+    }
+
+    function stopIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+    }
+
+    [firstNameInput, lastNameInput, companyInput].forEach((inp) => {
+      inp.addEventListener("input", resetIdleTimer);
+      inp.addEventListener("focus", resetIdleTimer);
+    });
+
+    ["pointerdown", "touchstart", "keydown"].forEach((evt) => {
+      document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+
+    resetIdleTimer();
+
+    // ---- Helpers ----
+    function openModal(el) { el.hidden = false; resetReturnIdleTimer(); }
+    function closeModal(el) { el.hidden = true; resetReturnIdleTimer(); }
+
+    function getFullName(first, last) {
+      return `${first} ${last}`.trim().replace(/\s+/g, " ");
+    }
+
+    // Backdrop close
+    document.addEventListener("click", (e) => {
+      const target = e.target;
+      if (target && target.matches(".modal-backdrop")) {
+        const which = target.getAttribute("data-close");
+        if (which === "confirm") closeModal(confirmModal);
+        if (which === "passcode") closeModal(passcodeModal);
+        if (which === "export") closeModal(exportConfirmModal);
+        if (which === "delete") closeModal(deleteConfirmModal);
+        if (which === "admin") closeModal(adminModal);
+      }
+    });
+
+    // Escape close
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!confirmModal.hidden) closeModal(confirmModal);
+      if (!passcodeModal.hidden) closeModal(passcodeModal);
+      if (!exportConfirmModal.hidden) closeModal(exportConfirmModal);
+      if (!deleteConfirmModal.hidden) closeModal(deleteConfirmModal);
+      if (!adminModal.hidden) closeModal(adminModal);
+    });
+
+    // Enter submits passcode
+    passcodeInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") checkPasscode();
+    });
+
+    // Buttons
+    signInBtn.addEventListener("click", signIn);
+    signOutBtn.addEventListener("click", signOut);
+
+    // Hidden admin shortcut: triple-tap title within ~1 second
+    let titleTapCount = 0;
+    let titleTapTimer = null;
+
+    hdrTitleEl.addEventListener("click", () => {
+      titleTapCount++;
+      clearTimeout(titleTapTimer);
+      titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 900);
+
+      if (titleTapCount >= 3) {
+        titleTapCount = 0;
+        pendingAction = "admin";
+        passcodeInput.value = "";
+        openModal(passcodeModal);
+        setTimeout(() => passcodeInput.focus(), 50);
+        resetIdleTimer();
+      }
+    });
+
+    confirmYes.addEventListener("click", () => confirmInduction(true));
+    confirmNo.addEventListener("click", () => confirmInduction(false));
+
+    passcodeSubmit.addEventListener("click", checkPasscode);
+    passcodeCancel.addEventListener("click", closePasscodeModal);
+
+    exportOk.addEventListener("click", closeExportModal);
+
+    deleteNo.addEventListener("click", () => {
+      pendingDeleteName = null;
+      closeModal(deleteConfirmModal);
+    });
+
+    deleteYes.addEventListener("click", () => {
+      if (!pendingDeleteName) return;
+      delete previousNames[pendingDeleteName];
+      localStorage.setItem("previousNames", JSON.stringify(previousNames));
+      pendingDeleteName = null;
+      closeModal(deleteConfirmModal);
+      render();
+    });
+
+    // Admin buttons
+    adminDlAll.addEventListener("click", () => { downloadFullArchive(); resetIdleTimer(); });
+    adminDlToday.addEventListener("click", () => { downloadDaySignIns(0); resetIdleTimer(); });
+    adminDlYesterday.addEventListener("click", () => { downloadDaySignIns(-1); resetIdleTimer(); });
+    adminClear.addEventListener("click", () => { clearArchive(); resetIdleTimer(); });
+    adminClose.addEventListener("click", () => closeModal(adminModal));
+
+    // iOS keyboard friendliness
+    [firstNameInput, lastNameInput, companyInput, passcodeInput].forEach((inp) => {
+      inp.addEventListener("focus", () => {
+        setTimeout(() => inp.scrollIntoView({ block: "center", behavior: "smooth" }), 50);
+      });
+    });
+
+    applyEnglish();
+    render();
+
+    function applyEnglish() {
+      document.documentElement.lang = "en";
+
+      hdrTitleEl.textContent = STR.hdrTitle;
+      hdrSubEl.textContent = STR.hdrSub;
+
+      firstNameInput.placeholder = STR.firstPh;
+      lastNameInput.placeholder = STR.lastPh;
+      companyInput.placeholder = STR.companyPh;
+
+      signInBtn.textContent = STR.signIn;
+      signOutBtn.textContent = STR.signOut;
+
+      activeHeaderEl.textContent = STR.activeHeader;
+      historyHeaderEl.textContent = STR.historyHeader;
+
+      confirmTitleEl.textContent = STR.confirmTitle;
+      confirmQuestionEl.textContent = STR.confirmQuestion;
+      confirmYes.textContent = STR.yes;
+      confirmNo.textContent = STR.no;
+
+      passcodeTitleEl.textContent = STR.passcodeTitle;
+      passcodeInput.placeholder = STR.passcodePh;
+      passcodeSubmit.textContent = STR.submit;
+      passcodeCancel.textContent = STR.cancel;
+
+      exportTitleEl.textContent = STR.exportTitle;
+      exportMsgEl.textContent = STR.exportMsg;
+      exportOk.textContent = STR.ok;
+
+      deleteTitleEl.textContent = STR.deleteTitle;
+      deleteYes.textContent = STR.delete;
+      deleteNo.textContent = STR.cancel;
+
+      // Admin labels
+      adminTitleEl.textContent = STR.adminTitle;
+      adminHintEl.textContent = STR.adminHint;
+      adminDlAll.textContent = STR.adminDlAll;
+      adminDlToday.textContent = STR.adminDlToday;
+      adminDlYesterday.textContent = STR.adminDlYesterday;
+      adminClear.textContent = STR.adminClear;
+      adminClose.textContent = STR.adminClose;
+    }
+
+    function signIn() {
+      const first = firstNameInput.value.trim();
+      const last = lastNameInput.value.trim();
+      const company = companyInput.value.trim();
+
+      if (!first || !last || !company) return alert(STR.alertMissing);
+
+      const fullName = getFullName(first, last);
+
+      if (visits.find(v => v.name === fullName && !v.signOut))
+        return alert(STR.alertAlreadyIn);
+
+      pendingSignIn = { name: fullName, company };
+      openModal(confirmModal);
+    }
+
+    function confirmInduction(confirmed) {
+      closeModal(confirmModal);
+      if (!confirmed) { pendingSignIn = null; return; }
+
+      visits.push({
+        name: pendingSignIn.name,
+        company: pendingSignIn.company,
+        signIn: new Date().toISOString(),
+        signOut: null
+      });
+
+      previousNames[pendingSignIn.name] = pendingSignIn.company;
+      localStorage.setItem("previousNames", JSON.stringify(previousNames));
+
+      pendingSignIn = null;
+      save();
+    }
+
+    function signOut() {
+      const first = firstNameInput.value.trim();
+      const last = lastNameInput.value.trim();
+
+      const fullName = getFullName(first, last);
+      const visit = visits.find(v => v.name === fullName && !v.signOut);
+      if (!visit) return alert(STR.alertNotIn);
+
+      visit.signOut = new Date().toISOString();
+      save();
+    }
+
+    function save() {
+      localStorage.setItem("visits", JSON.stringify(visits));
+      firstNameInput.value = "";
+      lastNameInput.value = "";
+      companyInput.value = "";
+
+      selectedName = null;
+      document.querySelectorAll("#activeList li, #historyList li").forEach(li => {
+        li.classList.remove("selected");
+      });
+
+      stopIdleTimer();
+      resetIdleTimer();
+      render();
+    }
+
+    function render() {
+      activeList.innerHTML = "";
+      historyList.innerHTML = "";
+
+      const signedInNames = new Set();
+      const active = visits.filter(v => !v.signOut);
+
+      active.forEach(v => {
+        const li = document.createElement("li");
+        li.dataset.name = v.name;
+
+        const text = document.createElement("div");
+        text.className = "li-text";
+        text.innerHTML = `
+          <div class="li-name">${escapeHtml(v.name)}</div>
+          <div class="li-company">${escapeHtml(v.company)}</div>
+        `;
+
+        text.addEventListener("click", () => {
+          setSelected(v.name, "activeList");
+
+          const parts = String(v.name).split(" ");
+          firstNameInput.value = parts.slice(0, -1).join(" ") || "";
+          lastNameInput.value = parts.slice(-1).join(" ") || "";
+          companyInput.value = v.company;
+          resetIdleTimer();
+        });
+
+        li.appendChild(text);
+        activeList.appendChild(li);
+        signedInNames.add(v.name);
+      });
+
+      const historyNames = Object.keys(previousNames)
+        .filter(name => !signedInNames.has(name))
+        .sort((a,b) => a.localeCompare(b));
+
+      historyNames.forEach(name => {
+        const company = previousNames[name] || "";
+        const li = document.createElement("li");
+        li.dataset.name = name;
+
+        const text = document.createElement("div");
+        text.className = "li-text";
+        text.innerHTML = `
+          <div class="li-name">${escapeHtml(name)}</div>
+          <div class="li-company">${escapeHtml(company)}</div>
+        `;
+
+        text.addEventListener("click", () => {
+          setSelected(name, "historyList");
+
+          const parts = String(name).split(" ");
+          firstNameInput.value = parts.slice(0, -1).join(" ") || "";
+          lastNameInput.value = parts.slice(-1).join(" ") || "";
+          companyInput.value = company;
+          resetIdleTimer();
+        });
+
+        const del = document.createElement("button");
+        del.className = "delete-btn";
+        del.type = "button";
+        del.textContent = "✕";
+        del.setAttribute("aria-label", `Delete ${name}`);
+
+        del.addEventListener("click", (e) => {
+          e.stopPropagation();
+          pendingDeleteName = name;
+          deleteText.textContent = STR.deletePrompt(name, company);
+          openModal(deleteConfirmModal);
+          resetIdleTimer();
+        });
+
+        li.appendChild(text);
+        li.appendChild(del);
+
+        historyList.appendChild(li);
+      });
+
+      activeCount.textContent = String(active.length);
+      historyCount.textContent = String(historyNames.length);
+
+      if (selectedName) {
+        const activeEl = document.querySelector(`#activeList li[data-name="${CSS.escape(selectedName)}"]`);
+        const historyEl = document.querySelector(`#historyList li[data-name="${CSS.escape(selectedName)}"]`);
+        (activeEl || historyEl)?.classList.add("selected");
+      }
+    }
+
+    // --- Export helpers ---
+    function csvEscape(value) {
+      const s = String(value ?? "");
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    function downloadCSVFromVisits(visitsArr, filenamePrefix) {
+      const header = ["Name", "Company", "Sign In", "Sign Out"];
+      const rows = [header];
+
+      visitsArr.forEach(v => rows.push([v.name, v.company, v.signIn, v.signOut || ""]));
+
+      const csv = rows.map(r => r.map(csvEscape).join(",")).join("\n") + "\n";
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, "-");
+      link.download = `${filenamePrefix}_${stamp}.csv`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Today / Yesterday export helpers (includes current + archived)
+    function pad2(n) { return String(n).padStart(2, "0"); }
+
+    function localDateKeyFromISO(iso) {
+      const d = new Date(iso);
+      if (isNaN(d)) return "";
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    }
+
+    function localDateKeyFromNow(offsetDays) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    }
+
+    function getAllVisitsCombined() {
+      const current = Array.isArray(visits) ? visits : [];
+      const batches = JSON.parse(localStorage.getItem("archive")) || [];
+      const archived = Array.isArray(batches)
+        ? batches.flatMap(b => Array.isArray(b?.visits) ? b.visits : [])
+        : [];
+      return [...archived, ...current];
+    }
+
+    function downloadDaySignIns(offsetDays) {
+      const key = localDateKeyFromNow(offsetDays);
+      const all = getAllVisitsCombined();
+
+      const filtered = all.filter(v => v?.signIn && localDateKeyFromISO(v.signIn) === key);
+
+      if (!filtered.length) {
+        alert(STR.adminNoRecords);
+        return;
+      }
+
+      const label = offsetDays === 0 ? "Today" : "Yesterday";
+      downloadCSVFromVisits(filtered, `CDM_SignIns_${label}_${key}`);
+    }
+
+    function closeExportModal() {
+      closeModal(exportConfirmModal);
+    }
+
+    function closePasscodeModal() {
+      passcodeInput.value = "";
+      closeModal(passcodeModal);
+      pendingAction = null;
+      resetIdleTimer();
+    }
+
+    function openAdmin() {
+      archive = JSON.parse(localStorage.getItem("archive")) || [];
+      openModal(adminModal);
+    }
+
+    function downloadFullArchive() {
+      archive = JSON.parse(localStorage.getItem("archive")) || [];
+      if (!archive.length) return alert(STR.adminNoArchive);
+      const all = archive.flatMap(b => Array.isArray(b?.visits) ? b.visits : []);
+      if (!all.length) return alert(STR.adminNoArchive);
+      downloadCSVFromVisits(all, "CDM_Visitor_Archive_All");
+    }
+
+    function clearArchive() {
+      if (!confirm("Clear archive?")) return;
+      archive = [];
+      localStorage.setItem("archive", JSON.stringify(archive));
+      alert(STR.adminCleared);
+    }
+
+    function checkPasscode() {
+      if (passcodeInput.value !== "8877") {
+        alert(STR.alertBadCode);
+        passcodeInput.value = "";
+        setTimeout(() => passcodeInput.focus(), 50);
+        return;
+      }
+
+      closeModal(passcodeModal);
+
+      if (pendingAction === "admin") openAdmin();
+
+      pendingAction = null;
+      resetIdleTimer();
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // Prevent pull-to-refresh / page scroll, allow only UL scrolling
+    document.addEventListener("touchmove", (e) => {
+      const path = e.composedPath ? e.composedPath() : [];
+      const inScrollable = path.some(el => el && el.tagName === "UL");
+      if (!inScrollable) e.preventDefault();
+    }, { passive: false });
+  </script>
+</body>
+</html>
