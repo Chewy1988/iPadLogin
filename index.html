@@ -1,304 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>iPad Visitor Log</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+  <meta charset="UTF-8" />
+  <title>Welcome</title>
 
-<!-- PWA Manifest -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#34c759">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#34c759" />
 
-<!-- iOS PWA Support -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="logo.png">
+  <!-- PWA / iOS -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="CSELogo.png" />
 
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f2f2f7; margin: 0; padding: 50px 20px; }
-  .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-  h1 { text-align: center; font-size: 32px; margin-bottom: 25px; }
-  input { width: 100%; font-size: 24px; padding: 18px; border-radius: 12px; border: 1px solid #ccc; margin-bottom: 20px; box-sizing: border-box; }
-  .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-  button { flex: 1; font-size: 24px; padding: 20px; border: none; border-radius: 14px; cursor: pointer; min-width: 120px; }
-  .sign-in { background: #34c759; color: white; }
-  .sign-out { background: #ff3b30; color: white; }
-  h2 { margin-top: 30px; font-size: 24px; }
-  ul { list-style: none; padding: 0; max-height: 520px; overflow-y: auto; }
-  li { background: #f2f2f7; margin: 8px 0; padding: 12px 16px; border-radius: 10px; font-size: 20px; cursor: pointer; }
-  li:active { background: #d1d1d6; }
-  .footer { margin-top: 30px; text-align: center; }
-  .export { font-size: 20px; padding: 14px 20px; border-radius: 12px; background: grey; color: white; border: none; cursor: pointer; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  /* Modals */
-  #confirmModal, #passcodeModal { display:none; }
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); }
-  .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
-  .modal h3 { font-size: 24px; margin-bottom: 10px; }
-  .modal-buttons { display: flex; gap: 10px; }
-  .modal-buttons button { flex: 1; font-size: 22px; padding: 14px; border-radius: 12px; border: none; cursor: pointer; }
-  .modal-buttons .yes { background: #34c759; color: white; }
-  .modal-buttons .no { background: #ff3b30; color: white; }
-</style>
+  <style>
+    :root{
+      --sat: env(safe-area-inset-top);
+      --sar: env(safe-area-inset-right);
+      --sab: env(safe-area-inset-bottom);
+      --sal: env(safe-area-inset-left);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body{
+      margin: 0;
+      padding: calc(16px + var(--sat)) calc(16px + var(--sar)) calc(16px + var(--sab)) calc(16px + var(--sal));
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #ffffff;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      overflow: hidden;
+    }
+
+    .wrap{
+      height: calc(100dvh - (16px + var(--sat)) - (16px + var(--sab)));
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border-radius: 24px;
+      border: 1px solid #e5e7eb;
+      padding: 28px;
+    }
+
+    .content{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    h1{
+      margin: 20;
+      font-size: 40px;
+      letter-spacing: -0.02em;
+      color: #111827;
+      font-weight: 800;
+    }
+
+    .logo{
+      width: min(60vw, 340px);
+      height: auto;
+      display: block;
+    }
+
+    .hint{
+      margin: 20;
+      font-size: 24px;
+      color: #6b7280;
+      font-weight: 650;
+    }
+  </style>
 </head>
+
 <body>
-
-<!-- Modals -->
-<div id="confirmModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal">
-    <h3>Induction Confirmation</h3>
-    <p>Have you been inducted?</p>
-    <div class="modal-buttons">
-      <button class="yes" onclick="confirmInduction(true)">Yes</button>
-      <button class="no" onclick="confirmInduction(false)">No</button>
+  <!-- Whole page is tappable/clickable -->
+  <main class="wrap" id="tapToEnter" role="button" tabindex="0" aria-label="Enter visitor log">
+    <div class="content">
+      <h1>Project Argo - CDM Area</h1>
+      <img class="logo" src="CSELogo.png" alt="CSE Logo" />
+      <p class="hint">Tap Anywhere to Sign In/Out</p>
     </div>
-  </div>
-</div>
+  </main>
 
-<div id="passcodeModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal">
-    <h3>Enter Passcode</h3>
-    <input type="password" id="passcodeInput" placeholder="Enter passcode" />
-    <div class="modal-buttons">
-      <button class="yes" onclick="checkPasscode()">Submit</button>
-      <button class="no" onclick="closePasscodeModal()">Cancel</button>
-    </div>
-  </div>
-</div>
+  <script>
+    // If you’ve renamed your main app page to app.html, send users there.
+    // (Your new index.html should be the start page containing this code.)
+    function go() {
+      window.location.href = "app.html";
+    }
 
-<div class="container">
-  <div style="text-align:center; margin-bottom:20px;">
-    <img src="logo.png" alt="Company Logo" style="max-width:200px; height:auto;">
-  </div>
+    document.getElementById("tapToEnter").addEventListener("click", go);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") go();
+    });
 
-  <h1>Project Argo CDM Area - Sign In/Out</h1>
-  <input id="nameInput" placeholder="Enter your name" />
-
-  <div class="buttons">
-    <button class="sign-in" onclick="signIn()">Sign In</button>
-    <button class="sign-out" onclick="signOut()">Sign Out</button>
-  </div>
-
-  <h2>Currently Signed In</h2>
-  <ul id="activeList"></ul>
-
-  <div class="footer">
-    <button class="export" onclick="requestExport()">Generate Report</button>
-  </div>
-</div>
-
-<div id="exportConfirmModal">
-  <div class="modal-backdrop"></div>
-  <div class="modal">
-    <h3>Confirm Export</h3>
-    <p>Did the CSV download successfully?</p>
-    <div class="modal-buttons">
-      <button class="yes" onclick="confirmExport(true)">Yes</button>
-      <button class="no" onclick="confirmExport(false)">No</button>
-    </div>
-  </div>
-</div>
-
-  
-<script>
-let visits = JSON.parse(localStorage.getItem("visits")) || [];
-const nameInput = document.getElementById("nameInput");
-  // Reset timer on any input or focus
-nameInput.addEventListener("input", resetNameClearTimer);
-nameInput.addEventListener("focus", resetNameClearTimer);
-
-const activeList = document.getElementById("activeList");
-let pendingSignInName = null;
-let pendingAction = null; // "export" or "clear"
-let nameClearTimeout = null;
-
-
-window.addEventListener("load", () => {
-  document.getElementById("exportConfirmModal").style.display = "none";
-});
-
-  
-render();
-
-  function formatDate(dateString) {
-  const d = new Date(dateString);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-}
-
-
-// --- Sign In / Out ---
-function signIn() {
-  const name = nameInput.value.trim();
-  if (!name) return alert("Please enter your name");
-  if (visits.find(v => v.name === name && !v.signOut)) return alert("You are already signed in");
-  pendingSignInName = name;
-  document.getElementById("confirmModal").style.display = "block";
-}
-
-function confirmInduction(confirmed) {
-  document.getElementById("confirmModal").style.display = "none";
-  if (!confirmed) { pendingSignInName = null; return; }
-  visits.push({ name: pendingSignInName, signIn: new Date().toISOString(), signOut: null });
-  pendingSignInName = null;
-  save();
-}
-
-function signOut() {
-  const name = nameInput.value.trim();
-  const visit = visits.find(v => v.name === name && !v.signOut);
-  if (!visit) return alert("You are not currently signed in");
-  visit.signOut = new Date().toISOString();
-  save();
-}
-
-function save() {
-  localStorage.setItem("visits", JSON.stringify(visits));
-  nameInput.value = "";
-  render();
-}
-
-function render() {
-  activeList.innerHTML = "";
-  visits.filter(v => !v.signOut).forEach(v => {
-    const li = document.createElement("li");
-    li.textContent = v.name;
-    li.addEventListener("click", () => { nameInput.value = v.name; });
-    activeList.appendChild(li);
-  });
-}
-function exportCSV() {
-  let csv = "Name,Sign In,Sign Out\n";
-  visits.forEach(v => {
-    csv += `${v.name},${formatDate(v.signIn)},${v.signOut ? formatDate(v.signOut) : ""}\n`;
-
-  });
-
-  // 📅 Build timestamped filename
-  const now = new Date();
-  const timestamp =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, "0") + "-" +
-    String(now.getDate()).padStart(2, "0") + "_" +
-    String(now.getHours()).padStart(2, "0") + "-" +
-    String(now.getMinutes()).padStart(2, "0") + "-" +
-    String(now.getSeconds()).padStart(2, "0");
-
-  const filename = `CDM Visitors Log_${timestamp}.csv`;
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-
-  URL.revokeObjectURL(link.href);
-
-  // Ask user to confirm download success
-  document.getElementById("exportConfirmModal").style.display = "block";
-}
-
-
-
-function requestExport() {
-  pendingAction = "export";
-  document.getElementById("passcodeModal").style.display = "block";
-  document.getElementById("passcodeInput").value = "";
-  document.getElementById("passcodeInput").focus();
-}
-
-
-
-function closePasscodeModal() { document.getElementById("passcodeModal").style.display = "none"; }
-function checkPasscode() {
-  const enteredPasscode = document.getElementById("passcodeInput").value;
-
-  if (enteredPasscode !== "8877") {
-    alert("Incorrect passcode.");
-    document.getElementById("passcodeInput").value = "";
-    document.getElementById("passcodeInput").focus();
-    return;
-  }
-
-  closePasscodeModal();
-
-  if (pendingAction === "export") {
-    exportCSV();
-  }
-
-  pendingAction = null;
-}
-
-function confirmExport(success) {
-  document.getElementById("exportConfirmModal").style.display = "none";
-
-  if (!success) {
-    alert("Export cancelled. Visitor data was not cleared.");
-    return;
-  }
-
-  // ✅ Clear data only after confirmation
-  visits = [];
-  localStorage.removeItem("visits");
-  render();
-
-  alert("Export confirmed. Visitor data has been cleared.");
-}
-function resetNameClearTimer() {
-  // Clear any existing timer
-  if (nameClearTimeout) clearTimeout(nameClearTimeout);
-
-  // Start a new 10-second timer
-  nameClearTimeout = setTimeout(() => {
-    nameInput.value = "";
-  }, 10000); // 10,000 ms = 10 seconds
-}
-function pauseNameClearTimer() {
-  if (nameClearTimeout) clearTimeout(nameClearTimeout);
-}
-
-
-// --- Wake Lock ---
-let wakeLock = null;
-async function requestWakeLock() {
-  try { wakeLock = await navigator.wakeLock.request('screen'); }
-  catch(err){ console.error(err); }
-}
-document.addEventListener('visibilitychange', () => {
-  if (wakeLock !== null && document.visibilityState === 'visible') requestWakeLock();
-});
-requestWakeLock();
-
-// --- Fullscreen ---
-async function requestFullscreen() {
-  const elem = document.documentElement;
-  if (elem.requestFullscreen) await elem.requestFullscreen();
-  else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
-}
-window.addEventListener('load', () => {
-  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-    requestFullscreen().catch(() => {});
-  }
-});
-document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement) requestFullscreen().catch(() => {});
-});
-
-// --- Service Worker Registration ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => console.log('Service Worker registered with scope:', registration.scope))
-      .catch(error => console.log('Service Worker registration failed:', error));
-  });
-}
-</script>
-
+    // extra: any tap/click anywhere on the page also works
+    document.addEventListener("pointerdown", () => go(), { once: true });
+  </script>
 </body>
 </html>
