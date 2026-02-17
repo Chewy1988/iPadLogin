@@ -435,12 +435,26 @@
   </main>
 
   <script>
-    // ---- Service Worker Register ----
+    // ============================================================
+    //  SERVICE WORKER REGISTER (fixed for iOS Home Screen)
+    // ============================================================
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js");
+      window.addEventListener("load", async () => {
+        try {
+          await navigator.serviceWorker.register("./service-worker.js");
+
+          // Important: on iOS, first load is often not controlled yet.
+          // Reload once after SW is ready so offline caching actually applies.
+          if (!navigator.serviceWorker.controller) {
+            await navigator.serviceWorker.ready;
+            location.reload();
+          }
+        } catch (e) {
+          console.log("SW registration failed:", e);
+        }
       });
     }
+    // ============================================================
 
     // ---- English-only strings ----
     const STR = {
