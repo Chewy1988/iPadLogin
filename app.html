@@ -1036,12 +1036,11 @@ hdrTitleEl.addEventListener("click", () => {
     }
 
     function downloadFullArchive() {
-      archive = JSON.parse(localStorage.getItem("archive")) || [];
-      if (!archive.length) return alert(STR.adminNoArchive);
-      const all = archive.flatMap(b => Array.isArray(b?.visits) ? b.visits : []);
-      if (!all.length) return alert(STR.adminNoArchive);
-      downloadCSVFromVisits(all, "CDM_Visitor_Archive_All");
-    }
+  const all = getAllVisitsCombined(); // includes archived + current visits
+  if (!all.length) return alert(STR.adminNoArchive);
+  downloadCSVFromVisits(all, "CDM_Visitor_All");
+}
+
 
     function clearArchive() {
       if (!confirm("Clear archive?")) return;
